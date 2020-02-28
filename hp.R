@@ -1,8 +1,7 @@
 library(holepunch)
 
-write_compendium_description(package     = "rvmsmg01", 
-                             description = "Avaliação das informações hidrométricas: bacia do rio Doce",
-                             path        = "./01")
+write_compendium_description(package     = "rvmsmg", 
+                             description = "Scripts e análises produzidas no estudo de regionalização de vazões mínimas sazonais no estado de MG")
 # to write a description, with dependencies listed 
 # It's good practice to now go fill in the placeholder text.
 

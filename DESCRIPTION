@@ -1,6 +1,6 @@
 Type: Compendium
-Package: rvmsmg01
-Title: 01
+Package: rvmsmg
+Title: Scripts/Analises
 Version: 0.0.1
 Authors@R: 
     person(given = "Francisco",
@@ -8,8 +8,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "fcoeustaquio@gmail.com",
            comment = c(ORCID = "0000-0003-4304-8998"))
-Description: Avaliação das informações hidrométricas: bacia
-    do rio Doce
+Description: Scripts e análises produzidas no estudo de regionalização de vazões mínimas sazonais no estado de MG
 License: MIT
 Depends: 
     rmarkdown,
