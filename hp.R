@@ -6,7 +6,7 @@ write_compendium_description(package     = "rvmsmg",
 # It's good practice to now go fill in the placeholder text.
 
 write_dockerfile(maintainer = "Francisco Silva",
-                 r_date   = 2020-02-21) 
+                 r_date     = "2020-02-21") 
 # To write a dockerfile. It will automatically pick the date of the last modified file, match it to 
 # that version of R and add it here. You can override this by passing r_date to some arbitrary date
 # (but one for which a R version exists).
