@@ -1,0 +1,29 @@
+Type: Compendium
+Package: rvmsmg01
+Title: 01
+Version: 0.0.1
+Authors@R: 
+    person(given = "First",
+           family = "Last",
+           role = c("aut", "cre"),
+           email = "fsilva@ehr.ufmg.br",
+           comment = c(ORCID = "0000-0003-4304-8998"))
+Description: Avaliação das informações hidrométricas: bacia
+    do rio Doce
+License: What license it uses
+Depends:
+    rmarkdown,
+    shinydashboard,
+    knitr,
+    psych,
+    moments,
+    magrittr,
+    tidyverse,
+    gridExtra,
+    shiny,
+    htmlwidgets,
+    data.table
+Remotes: 
+    karthik/holepunch
+Encoding: UTF-8
+LazyData: true

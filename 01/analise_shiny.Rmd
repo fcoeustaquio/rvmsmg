@@ -1,0 +1,293 @@
+---
+title: Análise indicadores
+author: Pedro Menezes de Araújo
+date: 12 de novembro de 2019
+
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(data.table)
+library(knitr)
+library(psych)
+library(moments)
+library(magrittr)
+library(tidyverse)
+library(gridExtra)
+library(shiny)
+library(htmlwidgets)
+#codigos = readRDS("codigos_a_analisar.rds")
+codigos = read.csv("codigos_a_analisar.csv")[,1]
+```
+
+## Análise
+
+O objetivo do primeiro dashboard foi avaliar a qualidade dos dados disponibilizados pela ANA através de alguns indicadores. Entre os indicadores propostos, temos:
+
+```{r echo = F}
+#metricas = readRDS("metricas.rds")
+
+metricas = data.table::fread("metricas.csv", encoding = "Latin-1") %>% as.data.frame() 
+
+data.frame("Métricas" = names(metricas)[-1]) %>% kable
+```
+
+Todos foram medidos, quando possível, para `r dim(metricas)[1]` estações. Abaixo a proporção de dados faltantes, que ocorreram quando não foi viável calcular o indicador, geralmente por falta de dados.
+
+```{r echo = F}
+#### análise univariada ####
+
+falhas = metricas %>%
+  select(-EstacaoCodigo) %>%
+  gather(indicador, valor)  %>%
+  group_by(indicador) %>%
+  summarise(na = mean(is.na(valor))) %>%
+  arrange(desc(na)) %>%
+  rename(`Proporção de dados faltantes` = na)
+
+falhas$indicador %<>% factor(levels = rev(falhas$indicador))
+
+ggplot(falhas, aes(x=indicador, y = `Proporção de dados faltantes`)) +
+  geom_bar(stat = 'identity', fill = 'dodgerblue4') +
+  coord_flip() +
+  labs(x = "") +
+  theme_minimal()
+```
+
+
+Visualização da distribuição dos indicadores e algumas medidas descritivas:
+
+```{r echo = F}
+inputPanel(
+  selectInput("indicador", label = "Indicador:",
+              choices = names(metricas)[-1], width = "400px")
+)
+
+#proporção de cota observada fora da curva-chave
+gen_distribuicao = function(variavel) {
+ 
+  m = metricas[,variavel]
+ 
+  if(str_detect(variavel, "Avaliação")) {
+    
+    p1 = metricas %>%
+      rename(variavel = variavel) %>%
+      ggplot(aes(x = variavel)) +
+      geom_bar(fill = "dodgerblue4") +
+      labs(y = "n")
+    
+    p2 = metricas %>%
+      rename(variavel = variavel) %>%
+      ggplot(aes(x = "", y = variavel)) +
+      geom_boxplot(fill = "dodgerblue4") +
+      labs(y = variavel, x = "")
+    
+    gridExtra::grid.arrange(p1, p2, nrow = 1)
+    
+    
+  }else{
+    
+    p1 = metricas %>%
+      rename(variavel = variavel) %>%
+      ggplot(aes(x = variavel)) +
+      geom_density(fill = "dodgerblue4") +
+      labs(y = "Densidade")
+    
+    p2 = metricas %>%
+      rename(variavel = variavel) %>%
+      ggplot(aes(x = "", y = variavel)) +
+      geom_boxplot(fill = "dodgerblue4") +
+      labs(y = variavel, x = "")
+    
+    gridExtra::grid.arrange(p1, p2, nrow = 1)
+    
+  }
+ 
+}
+
+
+
+gen_estatistica = function(variavel) {
+  metricas %>%
+    gather(metrica, valor) %>%
+    mutate(valor = as.numeric(valor)) %>%
+    filter(metrica == variavel) %>%
+    summarise(
+      `Mínimo` = min(valor, na.rm = T),
+      `Máximo` = max(valor, na.rm = T),
+      `Média` = mean(valor, na.rm = T),
+      `Mediana` = median(valor, na.rm = T),
+      Curtose = kurtosis(valor, na.rm = T),
+      Assimetria = skewness(valor, na.rm = T),
+      `Desvio-padrão` = sd(valor, na.rm = T)
+    )
+}
+
+renderPlot({
+  gen_distribuicao(input$indicador)
+})
+
+HTML("<center>")
+renderTable({
+  gen_estatistica(input$indicador)
+})
+HTML("</center>")
+
+```
+
+
+Indicadores como "Cota observada fora dos limites da curva-chave", "Sobreposição de curvas", "Vazões anteriores ao início da curva-chave", "Vazões posteriores ao início da curva-chave" e "Vazões sem curva-chave" apresentaram distribuições parecidas. Há uma concentração em valores com baixa porcentagem e alguns valores bem altos, não sendo possível separar de forma imediata alguns grupos. No geral esses indicadores se mostraram não muito comportados, com muitos outliers.
+
+Diferente, por exemplo, de "Dias com vazão" e "Erro na geração de vazão" em que há uma divisão clara, com grupos com valores altos e baixos e valores mais comportados.
+
+
+
+## Análise multivariada
+
+#### Matriz de correlação
+
+Do ponto de vista estatístico, esses indicadores estão trazendo informação de um construto/variável não observada, que aqui seria a "confiabilidade/qualidade" dos dados da estação.
+
+
+Partindo desse princípio, as variáveis devem estar razoavelmente associados, pois são um reflexo de fatores comuns. Abaixo é possível ver a matriz de correlação de Spearman dos itens:
+
+```{r echo = F, fig.width=14, fig.height=12}
+corm = metricas %>%
+  select(-EstacaoCodigo) %>%
+  cor(method = "spearman", use = "pairwise.complete.obs") %>%
+  as.data.frame() %>%
+  na.omit()
+
+corm$metrica2 = names(corm)
+
+
+corm %>%
+  gather(metrica, corr, -metrica2) %>%
+  mutate(metrica = factor(metrica, levels = names(corm)),
+         metrica2 = factor(metrica2, levels = names(corm))) %>%
+  ggplot(aes(x=metrica, y=metrica2, fill=corr, label=corr %>% round(2))) +
+  geom_tile(col = 'white') +
+  geom_text(col = 'white') +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.text = element_text(size = 15))
+```
+
+De imediato observamos variáveis que são pouco correlacionadas ou com valores de correlação sem sentido prático. A variável **Vazões anteriores ao início da curva chave** é um exemplo de indicador pouco associado com o resto, indicando que tal item não trás muita informação sobre a qualidade do dados da estação. As **avaliações das séries** são exemplos de possíveis bons indicadores, já que possuem correlações razoáveis com o resto dos itens.
+
+#### KMO
+
+O critério de Kayser-Meyer-Olkin (KMO) é uma estatística bastante utilizado para avaliar a qualidade de métricas utilizadas para descrever um construto. Se os dados são de fato influenciados por alguns fatores latentes, vale que a matriz de correlação inversa $R^{-1}$ é próxima de uma matriz  diagonal. O KMO é calculado pela fórmula:
+
+$$KMO = \frac{\sum_{i\neq j}R_{ij}^2}{\sum_{i\neq j}R_{ij}^2 + \sum_{i\neq j}Q_{ij}^2}$$
+
+Onde $R_ij$  e $Q_{ij} = R^{-1}_{ij}$ são, respectivamente, a correlação e correlação parcial entre as variáveis $X_i$ e $X_j$. Se $Q_{ij}$ é próximo de 0 (o que esperamos) então o KMO é próximo de 1.
+
+
+O KMO global, considerando todos os itens, foi `r round(KMO(metricas[,-1])$MSA, 2)`, valor baixo, dado que o recomendado é um KMO maior que 0.8.
+
+Abaixo o KMO por indicador:
+
+```{r echo = F}
+#calculando KMO
+kmo_obs = metricas %>%
+  select(-EstacaoCodigo) %>%
+  KMO()
+
+
+kmo = kmo_obs$MSAi %>% sort(decreasing = T)
+total = KMO(metricas %>% select(-EstacaoCodigo) %>% select(names(kmo[kmo>0.6])))
+
+nkmo = names(kmo)
+names(kmo) = NULL
+
+data.frame("Métrica" = nkmo, KMO = kmo) %>% kable()
+```
+
+Considerando apenas os melhores itens, com $KMO > 0.6$, temos que o índice global sobe para `r round(total$MSA, 2)`.
+
+
+#### Índice global
+
+Separando os indicadores com KMO maior que 0.6, que são:
+
+- Avaliação das séries
+- Cota observada inferior à medida
+- Falhas entre abril e setembro
+- Dias com vazão (n)  
+- Média de falhas no mês da Q7 anual  
+- Cota observada fora dos limites da curva-chave  
+- Falhas nas vazões observadas  
+
+Um índice simples de qualidade pode ser construído considerando a média do ranking de cada observação (deixando de inverter o sinal de "Avalição das séries" e "Dias com vazão (n)").
+
+Tal índice consegue discriminar razoavelmente bem estações não muito boas (com poucos dias, mal avaliadas e com problemas na vazão) das melhores.
+
+Abaixo a distribuição das notas em uma escala em que média é 5 e o desvio padrão é 2.5:
+
+
+```{r echo = F}
+best = names(kmo_obs$MSAi)[kmo_obs$MSAi > 0.6]
+
+
+bestmetricas = metricas %>% select("EstacaoCodigo", best)
+
+nota = bestmetricas %>%
+  na.omit() %>%
+  select(-EstacaoCodigo) %>%
+  mutate(`Cota observada inferior à medida` = -`Cota observada inferior à medida`,
+         `Falhas entre abril e setembto` = -`Falhas entre abril e setembto`,
+         `Cota observada fora dos limites da curva-chave` = - `Cota observada fora dos limites da curva-chave`,
+         `Falhas nas vazões observadas` = - `Falhas nas vazões observadas`,
+         `Média de falhas no mês da Q7 anual` = - `Média de falhas no mês da Q7 anual`) %>%
+  apply(MARGIN = 2, FUN = rank) %>%
+  rowMeans()
+
+
+bestmetricas %<>%
+  na.omit() %>%
+  mutate(nota = nota) %>%
+  arrange(desc(nota)) %>%
+  mutate(nota = (nota - mean(nota))/sd(nota)) %>%
+  mutate(nota = nota*2.5 + 5)
+
+
+ggplot(bestmetricas, aes(x=nota)) +
+  geom_density(fill = "dodgerblue4") +
+  theme_minimal() +
+  labs(y="Densidade", x = "Avaliação")
+
+```
+
+
+
+
+
+Tabela com as estações ordenadas pelo índice proposto:
+
+```{r echo = F}
+
+renderTable({
+  bestmetricas
+})
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
