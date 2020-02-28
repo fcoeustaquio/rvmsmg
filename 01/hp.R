@@ -1,7 +1,7 @@
 library(holepunch)
+setwd("./github/rvmsmg/01")
 write_compendium_description(package     = "rvmsmg01", 
-                             description = "Avaliação das informações hidrométricas: bacia do rio Doce",
-                             path        = "./01")
+                             description = "Avaliação das informações hidrométricas: bacia do rio Doce")
 # to write a description, with dependencies listed 
 # It's good practice to now go fill in the placeholder text.
 

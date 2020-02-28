@@ -3,15 +3,15 @@ Package: rvmsmg01
 Title: 01
 Version: 0.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Francisco",
+           family = "Silva",
            role = c("aut", "cre"),
-           email = "fsilva@ehr.ufmg.br",
-           comment = c(ORCID = "0000-0003-4304-8998"))
+           email = "fcoeustaquio@gmail.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: Avaliação das informações hidrométricas: bacia
     do rio Doce
 License: What license it uses
-Depends:
+Depends: 
     rmarkdown,
     shinydashboard,
     knitr,
