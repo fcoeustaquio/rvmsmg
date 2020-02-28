@@ -7,10 +7,10 @@ Authors@R:
            family = "Silva",
            role = c("aut", "cre"),
            email = "fcoeustaquio@gmail.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0003-4304-8998"))
 Description: Avaliação das informações hidrométricas: bacia
     do rio Doce
-License: What license it uses
+License: MIT
 Depends: 
     rmarkdown,
     shinydashboard,
