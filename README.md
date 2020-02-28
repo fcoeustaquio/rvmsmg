@@ -6,5 +6,5 @@ Esse reposítório destina-se a armazenar os *scripts* e as respectivas análise
 
 Nos *links* indicados abaixo alguns dos *scripts*/análises produzidas são apresentadas, sob o propósito de permitir discussões entre integrantes das equipes envolvidas no estudo. Para executá-los, deve-se clicar sobre o botão **launch|binder**, disponível em cada um dos *links*.
 
-1. [Análise de dados - avaliação das informações hidrométricas: bacia do rio Doce](https://github.com/fcoeustaquio/rvmsmg/01)
+1. [Análise de dados - avaliação das informações hidrométricas: bacia do rio Doce](https://github.com/fcoeustaquio/rvmsmg/tree/master/01)
 
